@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# champion icons (231 MB — source at repo root)
+/public/champion-icons/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
