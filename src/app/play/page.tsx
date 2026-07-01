@@ -225,35 +225,48 @@ function SingleModeContent() {
             <label className="text-sm font-medium text-muted-foreground">
               Which ability?
             </label>
-            {state.abilityList ? (
-              <AnswerCombobox
-                key={`ability-${state.feedbackKey}`}
-                id="ability-guess"
-                candidates={championAbilityPool}
-                onSelect={(v) => {
-                  dispatch({ type: "SET_ABILITY_GUESS", guess: v });
-                  dispatch({ type: "SUBMIT_ABILITY", guess: v });
-                }}
-                placeholder="Search ability name..."
-              />
-            ) : (
-              <Input
-                key={`ability-text-${state.feedbackKey}`}
-                value={textAbilityValue}
-                onChange={(e) => setTextAbilityValue(e.target.value)}
-                placeholder="Type ability name..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const value = textAbilityValue.trim();
-                    if (value) {
-                      setTextAbilityValue("");
-                      dispatch({ type: "SET_ABILITY_GUESS", guess: value });
-                      dispatch({ type: "SUBMIT_ABILITY", guess: value });
-                    }
-                  }
-                }}
-              />
-            )}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                {state.abilityList ? (
+                  <AnswerCombobox
+                    key={`ability-${state.feedbackKey}`}
+                    id="ability-guess"
+                    candidates={championAbilityPool}
+                    onSelect={(v) => {
+                      dispatch({ type: "SET_ABILITY_GUESS", guess: v });
+                      dispatch({ type: "SUBMIT_ABILITY", guess: v });
+                    }}
+                    placeholder="Search ability name..."
+                  />
+                ) : (
+                  <Input
+                    key={`ability-text-${state.feedbackKey}`}
+                    value={textAbilityValue}
+                    onChange={(e) => setTextAbilityValue(e.target.value)}
+                    placeholder="Type ability name..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const value = textAbilityValue.trim();
+                        if (value) {
+                          setTextAbilityValue("");
+                          dispatch({ type: "SET_ABILITY_GUESS", guess: value });
+                          dispatch({ type: "SUBMIT_ABILITY", guess: value });
+                        }
+                      }
+                    }}
+                  />
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => dispatch({ type: "SKIP_ROUND" })}
+                className="shrink-0 gap-1.5"
+              >
+                <SkipForward className="h-4 w-4" />
+                Skip
+              </Button>
+            </div>
           </>
         )}
       </div>
