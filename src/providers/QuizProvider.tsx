@@ -12,7 +12,6 @@ import {
   startSession,
   pickRound,
   getChampionPoolNames,
-  getAbilityNamePoolForSession,
   gradeChampionGuess,
   gradeAbilityNameGuess,
   type Session,
@@ -46,7 +45,6 @@ interface QuizState {
   lastAbilityCorrect: boolean | null;
   lastRoundSkipped: boolean;
   championPool: string[];
-  abilityNamePool: string[];
   sessionComplete: boolean;
   theme: "dark" | "light";
   totalGames: number;
@@ -128,7 +126,6 @@ function reducer(state: QuizState, action: Action): QuizState {
       });
       const round = pickRound(session);
       const pool = getChampionPoolNames(session);
-      const abilityPool = getAbilityNamePoolForSession(session);
       const iconIdx =
         state.mode === "single" && round && round.abilitiesPresented[0].icons.length > 1
           ? Math.floor(Math.random() * round.abilitiesPresented[0].icons.length)
@@ -146,7 +143,6 @@ function reducer(state: QuizState, action: Action): QuizState {
         lastAbilityCorrect: null,
         lastRoundSkipped: false,
         championPool: pool,
-        abilityNamePool: abilityPool,
         sessionComplete: false,
         sessionAttempts: 0,
         sessionCorrect: 0,
@@ -408,7 +404,6 @@ const initialState: QuizState = {
   lastAbilityCorrect: null,
   lastRoundSkipped: false,
   championPool: [],
-  abilityNamePool: [],
   sessionComplete: false,
   theme: "dark",
   totalGames: 0,

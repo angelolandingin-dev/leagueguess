@@ -89,10 +89,6 @@ export function saveToggleStates(toggles: { abilityList: boolean }): void {
   set("toggles", toggles);
 }
 
-export function loadTheme(): "dark" | "light" {
-  return get<"dark" | "light">("theme", "dark");
-}
-
 export function resetAll(): void {
   remove("totalGames");
   remove("lifetimeAttempts");

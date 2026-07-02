@@ -25,19 +25,6 @@ export function getChampionPoolNames(session: Session): string[] {
   return getPool(session);
 }
 
-export function getAbilityNamePoolForSession(session: Session): string[] {
-  const pool = getPool(session);
-  const names = new Set<string>();
-  for (const c of champions) {
-    if (pool.includes(c.name)) {
-      for (const a of c.abilities) {
-        names.add(a.name);
-      }
-    }
-  }
-  return shuffle(Array.from(names));
-}
-
 export function pickRound(session: Session): Round | null {
   const pool = getPool(session);
   const eligible = champions.filter((c) => pool.includes(c.name));
@@ -70,15 +57,6 @@ function pickWeightedAbility(abilities: Ability[]): Ability {
     if (rand <= 0) return w.ability;
   }
   return withWeights[0].ability;
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
 }
 
 function normalize(s: string): string {
