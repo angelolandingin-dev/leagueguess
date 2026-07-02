@@ -7,7 +7,7 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import type { Mode, Filters, Round } from "@/data/types";
+import type { Mode, Round } from "@/data/types";
 import {
   startSession,
   pickRound,
@@ -35,7 +35,6 @@ const ROTATIONS = [0, 90, 180, 270];
 
 interface QuizState {
   mode: Mode;
-  filters: Filters;
   session: Session | null;
   currentRound: Round | null;
   phase: "idle" | "ready" | "champion" | "names" | "naming" | "result" | "complete";
@@ -73,7 +72,6 @@ interface QuizState {
 
 type Action =
   | { type: "SET_MODE"; mode: Mode }
-  | { type: "SET_FILTERS"; filters: Filters }
   | { type: "SET_CHAMPION_GUESS"; guess: string }
   | { type: "SET_ABILITY_GUESS"; guess: string }
   | { type: "TOGGLE_ROUND_GRAYSCALE" }
@@ -97,8 +95,6 @@ function reducer(state: QuizState, action: Action): QuizState {
   switch (action.type) {
     case "SET_MODE":
       return { ...state, mode: action.mode };
-    case "SET_FILTERS":
-      return { ...state, filters: action.filters };
     case "SET_CHAMPION_GUESS":
       return { ...state, championGuess: action.guess };
     case "SET_ABILITY_GUESS":
@@ -129,7 +125,6 @@ function reducer(state: QuizState, action: Action): QuizState {
     case "START_SESSION": {
       const session = startSession({
         mode: state.mode,
-        filters: state.filters,
       });
       const round = pickRound(session);
       const pool = getChampionPoolNames(session);
@@ -402,7 +397,6 @@ function reducer(state: QuizState, action: Action): QuizState {
 
 const initialState: QuizState = {
   mode: "single",
-  filters: {},
   session: null,
   currentRound: null,
   phase: "idle",
@@ -424,6 +418,7 @@ const initialState: QuizState = {
   sessionAttempts: 0,
   sessionCorrect: 0,
   sessionSkipped: 0,
+  shownIconIndex: 0,
   roundGrayscale: true,
   roundRotation: true,
   roundRotationAngle: 0,

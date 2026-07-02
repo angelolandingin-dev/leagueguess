@@ -34,42 +34,7 @@ export interface ChampionsData {
 
 export type Mode = "single" | "batch";
 
-export interface Filters {
-  region?: string;
-  era?: string;
-  class?: string;
-}
-
-export interface RoundResult {
-  championName: string;
-  championCorrect: boolean;
-  abilityName?: string;
-  abilityCorrect?: boolean;
-  abilitySlot?: string;
-}
-
-export interface GameState {
-  mode: Mode;
-  filters: Filters;
-  sessionAttempts: number;
-  sessionCorrect: number;
-  sessionSkipped: number;
-  lifetimeAttempts: number;
-  lifetimeCorrect: number;
-  lifetimeSkipped: number;
-  totalGames: number;
-  currentRoundIndex: number;
-  rounds: Round[];
-  history: RoundResult[];
-  phase: "champion" | "names" | "result";
-}
-
 export interface Round {
   champion: Champion;
   abilitiesPresented: Ability[];
-}
-
-export interface SessionSettings {
-  mode: Mode;
-  filters: Filters;
 }

@@ -1,31 +1,24 @@
-import type { Mode, Filters, Round, Ability } from "@/data/types";
+import type { Mode, Round, Ability } from "@/data/types";
 import { champions, getAllChampionNames } from "@/data/champions";
-import { filterChampionsByMeta } from "@/data/champion-meta";
 
 export interface Session {
   mode: Mode;
-  filters: Filters;
   currentRoundIndex: number;
   seenChampions: Record<string, number>;
 }
 
 export function startSession(opts: {
   mode: Mode;
-  filters?: Filters;
 }): Session {
   return {
     mode: opts.mode,
-    filters: opts.filters || {},
     currentRoundIndex: 0,
     seenChampions: {},
   };
 }
 
-function getPool(session: Session): string[] {
-  return filterChampionsByMeta(
-    getAllChampionNames(),
-    session.filters
-  );
+function getPool(_session: Session): string[] {
+  return getAllChampionNames();
 }
 
 export function getChampionPoolNames(session: Session): string[] {
