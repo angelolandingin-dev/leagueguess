@@ -1,5 +1,5 @@
 import type { Mode, Filters, Round, Ability } from "@/data/types";
-import { champions } from "@/data/champions";
+import { champions, getAllChampionNames } from "@/data/champions";
 import { filterChampionsByMeta } from "@/data/champion-meta";
 
 export interface Session {
@@ -23,7 +23,7 @@ export function startSession(opts: {
 
 function getPool(session: Session): string[] {
   return filterChampionsByMeta(
-    champions.map((c) => c.name),
+    getAllChampionNames(),
     session.filters
   );
 }

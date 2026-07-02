@@ -55,11 +55,15 @@ export function getAllChampionNames(): string[] {
 
 export const TRANSFORM_CHAMPIONS = ["Jayce", "Elise", "Nidalee", "Gnar"] as const;
 
-function decodeIconName(filename: string): string {
-  return decodeURIComponent(filename)
+function decodeIconName(filename: string, championPrefix?: string): string {
+  let name = decodeURIComponent(filename)
     .replace(/_HD\.(png|jpg)$/i, "")
     .replace(/_/g, " ")
     .trim();
+  if (championPrefix && name.startsWith(championPrefix + " ")) {
+    name = name.slice(championPrefix.length + 1);
+  }
+  return name;
 }
 
 export function isTransformChampion(championName: string): boolean {
@@ -74,9 +78,10 @@ export function getChampionAllAbilityNames(championName: string): string[] {
     names.add(ability.name);
     if (isTransformChampion(championName)) {
       for (const icon of ability.icons) {
-        const formName = decodeIconName(icon);
-        if (formName && formName !== ability.name) {
-          names.add(formName);
+        const formName = decodeIconName(icon, championName);
+        const stripped = formName.replace(/\s+\d+$/, "");
+        if (stripped && stripped !== ability.name) {
+          names.add(stripped);
         }
       }
     }
