@@ -14,6 +14,7 @@ import {
   getChampionPoolNames,
   getAbilityNamePoolForSession,
   gradeChampionGuess,
+  gradeAbilityNameGuess,
   type Session,
 } from "@/lib/quiz-engine";
 import {
@@ -56,6 +57,7 @@ interface QuizState {
   sessionAttempts: number;
   sessionCorrect: number;
   sessionSkipped: number;
+  shownIconIndex: number;
   roundGrayscale: boolean;
   roundRotation: boolean;
   roundRotationAngle: number;
@@ -132,6 +134,10 @@ function reducer(state: QuizState, action: Action): QuizState {
       const round = pickRound(session);
       const pool = getChampionPoolNames(session);
       const abilityPool = getAbilityNamePoolForSession(session);
+      const iconIdx =
+        state.mode === "single" && round && round.abilitiesPresented[0].icons.length > 1
+          ? Math.floor(Math.random() * round.abilitiesPresented[0].icons.length)
+          : 0;
       return {
         ...state,
         session,
@@ -150,6 +156,7 @@ function reducer(state: QuizState, action: Action): QuizState {
         sessionAttempts: 0,
         sessionCorrect: 0,
         sessionSkipped: 0,
+        shownIconIndex: iconIdx,
         roundGrayscale: true,
         roundRotation: true,
         roundRotationAngle: ROTATIONS[Math.floor(Math.random() * ROTATIONS.length)],
@@ -205,8 +212,7 @@ function reducer(state: QuizState, action: Action): QuizState {
       const batchAbility = batchAbilities[action.abilityIndex];
       if (!batchAbility) return state;
 
-      const normalized = action.guess.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim();
-      const correct = batchAbility.name.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim() === normalized;
+      const correct = gradeAbilityNameGuess(batchAbility, action.guess);
 
       if (!correct) {
         return {
@@ -253,9 +259,7 @@ function reducer(state: QuizState, action: Action): QuizState {
       if (!state.session || !state.currentRound || !state.currentRound.abilitiesPresented[0])
         return state;
       const ability = state.currentRound.abilitiesPresented[0];
-      const normalized = action.guess.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim();
-      const correct =
-        ability.name.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim() === normalized;
+      const correct = gradeAbilityNameGuess(ability, action.guess);
 
       if (!correct) {
         return {
@@ -283,6 +287,10 @@ function reducer(state: QuizState, action: Action): QuizState {
     case "NEXT_ROUND": {
       if (!state.session) return state;
       const round = pickRound(state.session);
+      const iconIdx =
+        state.mode === "single" && round && round.abilitiesPresented[0].icons.length > 1
+          ? Math.floor(Math.random() * round.abilitiesPresented[0].icons.length)
+          : 0;
       return {
         ...state,
         currentRound: round,
@@ -294,6 +302,7 @@ function reducer(state: QuizState, action: Action): QuizState {
         lastChampionCorrect: null,
         lastAbilityCorrect: null,
         lastRoundSkipped: false,
+        shownIconIndex: iconIdx,
         feedbackKey: state.feedbackKey + 1,
         roundGrayscale: true,
         roundRotation: true,

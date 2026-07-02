@@ -96,8 +96,14 @@ function normalize(s: string): string {
     .trim();
 }
 
-function abilityNameMatch(roundName: string, guess: string): boolean {
-  return normalize(roundName) === normalize(guess);
+function iconFilenameToName(filename: string, champion: string): string {
+  const prefix = champion.replace(/'/g, '').replace(/\s+/g, '_') + '_';
+  let name = filename.startsWith(prefix) ? filename.slice(prefix.length) : filename;
+  name = name.replace(/\.\w+$/, '');
+  name = name.replace(/_HD\d*$/, '').replace(/_HD$/, '');
+  name = name.replace(/%21/g, '!').replace(/%27/g, "'").replace(/%2C/g, ',').replace(/%2E/g, '.');
+  name = name.replace(/_/g, ' ');
+  return name.trim();
 }
 
 export function gradeChampionGuess(round: Round, guess: string): boolean {
@@ -106,9 +112,20 @@ export function gradeChampionGuess(round: Round, guess: string): boolean {
 
 export function gradeAbilityNameGuess(
   ability: Ability,
-  guess: string
+  guess: string,
+  shownIcon?: string
 ): boolean {
-  return abilityNameMatch(ability.name, guess);
+  const guessNorm = normalize(guess);
+  if (normalize(ability.name) === guessNorm) return true;
+  if (!shownIcon) return false;
+
+  const iconName = iconFilenameToName(shownIcon, ability.champion);
+  const iconNorm = normalize(iconName);
+
+  if (iconNorm === guessNorm) return true;
+  if (iconNorm.includes(guessNorm) || guessNorm.includes(iconNorm)) return true;
+
+  return false;
 }
 
 

@@ -5,6 +5,7 @@ export interface Ability {
   name: string;
   slot: Slot;
   icons: string[];
+
 }
 
 export interface Champion {

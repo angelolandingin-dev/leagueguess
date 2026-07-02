@@ -52,3 +52,34 @@ export function getAbilityNamePool(pool: string[]): string[] {
 export function getAllChampionNames(): string[] {
   return champions.map((c) => c.name);
 }
+
+export const TRANSFORM_CHAMPIONS = ["Jayce", "Elise", "Nidalee", "Gnar"] as const;
+
+function decodeIconName(filename: string): string {
+  return decodeURIComponent(filename)
+    .replace(/_HD\.(png|jpg)$/i, "")
+    .replace(/_/g, " ")
+    .trim();
+}
+
+export function isTransformChampion(championName: string): boolean {
+  return (TRANSFORM_CHAMPIONS as readonly string[]).includes(championName);
+}
+
+export function getChampionAllAbilityNames(championName: string): string[] {
+  const champ = championIndex.get(championName);
+  if (!champ) return [];
+  const names = new Set<string>();
+  for (const ability of champ.abilities) {
+    names.add(ability.name);
+    if (isTransformChampion(championName)) {
+      for (const icon of ability.icons) {
+        const formName = decodeIconName(icon);
+        if (formName && formName !== ability.name) {
+          names.add(formName);
+        }
+      }
+    }
+  }
+  return Array.from(names);
+}

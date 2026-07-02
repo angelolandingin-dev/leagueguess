@@ -8,7 +8,17 @@ import { AbilityIcon } from "@/components/AbilityIcon";
 import { AbilityStack } from "@/components/AbilityStack";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getChampionAllAbilityNames } from "@/data/champions";
 import { LogOut, SkipForward, Eye, RotateCw, EyeOff, RotateCcw } from "lucide-react";
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export default function PlayPage() {
   const { state, dispatch } = useQuiz();
@@ -82,7 +92,7 @@ function SingleModeContent() {
   if (!ability) return null;
 
   const championAbilityPool = state.currentRound
-    ? state.currentRound.champion.abilities.map((a) => a.name).sort(() => Math.random() - 0.5)
+    ? shuffle(getChampionAllAbilityNames(state.currentRound.champion.name))
     : [];
 
   const allGuesses = [
@@ -305,7 +315,7 @@ function BatchModeContent() {
 
   if (!champion) return null;
 
-  const abilityNamePool = abilities.map((a) => a.name).sort(() => Math.random() - 0.5);
+  const abilityNamePool = shuffle(abilities.map((a) => a.name));
 
   return (
     <div className="flex flex-1 flex-col px-4 py-8 gap-6 max-w-lg mx-auto w-full mt-[10vh]">
