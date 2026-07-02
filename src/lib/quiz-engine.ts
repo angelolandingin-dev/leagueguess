@@ -55,7 +55,9 @@ export function pickRound(session: Session): Round | null {
   session.seenChampions[chosen.name] = (session.seenChampions[chosen.name] || 0) + 1;
 
   if (session.mode === "batch") {
-    return { champion: chosen, abilitiesPresented: shuffle(chosen.abilities) };
+    const SLOT_ORDER: Record<string, number> = { i: 0, q: 1, w: 2, e: 3, r: 4 };
+    const sorted = [...chosen.abilities].sort((a, b) => SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot]);
+    return { champion: chosen, abilitiesPresented: sorted };
   }
 
   const ability = pickWeightedAbility(chosen.abilities);

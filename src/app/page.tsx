@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuiz } from "@/providers/QuizProvider";
-import { Swords, Layers, Infinity, Zap, List } from "lucide-react";
+import { Swords, Layers, Zap, List } from "lucide-react";
 
 export default function HomePage() {
   const { state, dispatch } = useQuiz();
@@ -39,9 +39,7 @@ export default function HomePage() {
                 Guess champion + ability name from one icon
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <Infinity className="inline h-3 w-3 mr-0.5" /> unlimited rounds
-            </CardContent>
+            <CardContent className="text-sm text-muted-foreground" />
           </Card>
 
           <Card
@@ -55,9 +53,7 @@ export default function HomePage() {
                 Identify champion from full ability set
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              <Infinity className="inline h-3 w-3 mr-0.5" /> unlimited rounds
-            </CardContent>
+            <CardContent className="text-sm text-muted-foreground" />
           </Card>
         </div>
 

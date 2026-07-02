@@ -32,7 +32,7 @@ export function AbilityStack({
   return (
     <div className="flex flex-wrap justify-center gap-3">
       {abilities.map((ability) => (
-        <div key={ability.slot} className="flex flex-col items-center gap-1.5">
+        <div key={ability.name} className="flex flex-col items-center gap-1.5">
           <div className="relative">
             {ability.icons.length > 1 ? (
               <div className="relative">

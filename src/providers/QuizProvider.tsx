@@ -63,7 +63,7 @@ interface QuizState {
   roundRotationLocked: boolean;
   abilityList: boolean;
   feedbackKey: number;
-  batchAbilityStatus: ("pending" | "correct")[];
+  batchAbilityStatus: ("pending" | "correct" | "skipped")[];
   batchAbilityKeys: Record<number, number>;
   message: string | null;
   messageType: "correct" | "incorrect" | null;
@@ -87,6 +87,7 @@ type Action =
   | { type: "RESET_STATS" }
   | { type: "SUBMIT_BATCH_ABILITY"; abilityIndex: number; guess: string }
   | { type: "SKIP_ROUND" }
+  | { type: "SKIP_BATCH_ABILITY" }
   | { type: "FINISH_SESSION" }
   | { type: "RETURN_HOME" };
 
@@ -198,6 +199,56 @@ function reducer(state: QuizState, action: Action): QuizState {
         batchAbilityKeys: {},
       };
     }
+    case "SUBMIT_BATCH_ABILITY": {
+      if (state.phase !== "naming" || !state.currentRound) return state;
+      const batchAbilities = state.currentRound.abilitiesPresented;
+      const batchAbility = batchAbilities[action.abilityIndex];
+      if (!batchAbility) return state;
+
+      const normalized = action.guess.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim();
+      const correct = batchAbility.name.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim() === normalized;
+
+      if (!correct) {
+        return {
+          ...state,
+          sessionAttempts: state.sessionAttempts + 1,
+          lastRoundSkipped: false,
+          batchAbilityKeys: {
+            ...state.batchAbilityKeys,
+            [action.abilityIndex]: (state.batchAbilityKeys[action.abilityIndex] || 0) + 1,
+          },
+          message: "✗ Wrong ability! Try again.",
+          messageType: "incorrect",
+        };
+      }
+
+      const newStatus = [...state.batchAbilityStatus];
+      newStatus[action.abilityIndex] = "correct";
+      const allDone = newStatus.every((s) => s !== "pending");
+
+      if (allDone) {
+        return {
+          ...state,
+          batchAbilityStatus: newStatus,
+          sessionAttempts: state.sessionAttempts + 1,
+          sessionCorrect: state.sessionCorrect + 1,
+          lastRoundSkipped: false,
+          phase: "result",
+          message: null,
+          messageType: null,
+        };
+      }
+
+      return {
+        ...state,
+        batchAbilityStatus: newStatus,
+        sessionAttempts: state.sessionAttempts + 1,
+        sessionCorrect: state.sessionCorrect + 1,
+        lastRoundSkipped: false,
+        message: null,
+        messageType: null,
+      };
+    }
     case "SUBMIT_ABILITY": {
       if (!state.session || !state.currentRound || !state.currentRound.abilitiesPresented[0])
         return state;
@@ -225,56 +276,6 @@ function reducer(state: QuizState, action: Action): QuizState {
         sessionAttempts: state.sessionAttempts + 1,
         sessionCorrect: state.sessionCorrect + 1,
         phase: "result",
-        message: null,
-        messageType: null,
-      };
-    }
-    case "SUBMIT_BATCH_ABILITY": {
-      if (state.phase !== "naming" || !state.currentRound) return state;
-      const abilities = state.currentRound.abilitiesPresented;
-      const ability = abilities[action.abilityIndex];
-      if (!ability) return state;
-
-      const normalized = action.guess.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim();
-      const correct = ability.name.toLowerCase().replace(/[^a-z0-9\s']/g, "").trim() === normalized;
-
-      if (!correct) {
-        return {
-          ...state,
-          sessionAttempts: state.sessionAttempts + 1,
-          lastRoundSkipped: false,
-          batchAbilityKeys: {
-            ...state.batchAbilityKeys,
-            [action.abilityIndex]: (state.batchAbilityKeys[action.abilityIndex] || 0) + 1,
-          },
-          message: "✗ Wrong ability! Try again.",
-          messageType: "incorrect",
-        };
-      }
-
-      const newStatus = [...state.batchAbilityStatus];
-      newStatus[action.abilityIndex] = "correct";
-      const allCorrect = newStatus.every((s) => s === "correct");
-
-      if (allCorrect) {
-        return {
-          ...state,
-          batchAbilityStatus: newStatus,
-          sessionAttempts: state.sessionAttempts + 1,
-          sessionCorrect: state.sessionCorrect + 1,
-          lastRoundSkipped: false,
-          phase: "result",
-          message: null,
-          messageType: null,
-        };
-      }
-
-      return {
-        ...state,
-        batchAbilityStatus: newStatus,
-        sessionAttempts: state.sessionAttempts + 1,
-        sessionCorrect: state.sessionCorrect + 1,
-        lastRoundSkipped: false,
         message: null,
         messageType: null,
       };
@@ -313,6 +314,32 @@ function reducer(state: QuizState, action: Action): QuizState {
         phase: "result",
         lastRoundSkipped: true,
         sessionSkipped: state.sessionSkipped + 1,
+      };
+    }
+    case "SKIP_BATCH_ABILITY": {
+      if (state.phase !== "naming") return state;
+      const currentIdx = state.batchAbilityStatus.findIndex((s) => s === "pending");
+      if (currentIdx === -1) return state;
+      const newStatus = [...state.batchAbilityStatus];
+      newStatus[currentIdx] = "skipped";
+      const allDone = newStatus.every((s) => s !== "pending");
+      if (allDone) {
+        return {
+          ...state,
+          batchAbilityStatus: newStatus,
+          phase: "result",
+          lastRoundSkipped: true,
+          sessionSkipped: state.sessionSkipped + 1,
+        };
+      }
+      return {
+        ...state,
+        batchAbilityStatus: newStatus,
+        sessionSkipped: state.sessionSkipped + 1,
+        batchAbilityKeys: {
+          ...state.batchAbilityKeys,
+          [currentIdx]: (state.batchAbilityKeys[currentIdx] || 0) + 1,
+        },
       };
     }
     case "CLEAR_MESSAGE":

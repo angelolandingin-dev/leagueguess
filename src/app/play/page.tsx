@@ -301,17 +301,15 @@ function BatchModeContent() {
   const champion = state.currentRound?.champion;
   const abilities = state.currentRound?.abilitiesPresented ?? [];
   const router = useRouter();
+  const isResult = state.phase === "result";
 
   if (!champion) return null;
 
-  const abilityNamePool = abilities.map((a) => a.name);
+  const abilityNamePool = abilities.map((a) => a.name).sort(() => Math.random() - 0.5);
 
   return (
     <div className="flex flex-1 flex-col px-4 py-8 gap-6 max-w-lg mx-auto w-full mt-[10vh]">
       <div className="flex justify-center gap-4">
-        <span className="font-mono text-sm tabular-nums text-muted-foreground">
-          Kit {state.session!.currentRoundIndex + 1}
-        </span>
         <span className="font-mono text-sm tabular-nums text-muted-foreground">
           Attempts: {state.sessionAttempts}
         </span>
@@ -323,13 +321,64 @@ function BatchModeContent() {
         </span>
       </div>
 
-      {state.phase !== "result" && (
-        <AbilityStack
-          abilities={champion.abilities}
-          size="sm"
-          showLabels
-        />
-      )}
+      {/* Ability stack + result buttons row */}
+      <div className={`flex items-start gap-5 justify-center ${isResult ? "w-full" : ""}`}>
+        {!isResult && (
+          <div className="shrink-0">
+            <AbilityStack
+              abilities={champion.abilities}
+              size="sm"
+              showLabels
+            />
+          </div>
+        )}
+        {isResult && (
+          <div className="flex flex-col items-center gap-4 w-full">
+              <div className={`flex flex-col items-center gap-3 rounded-xl p-4 w-full ${state.lastRoundSkipped ? "ring-2 ring-muted-foreground/40 ring-offset-4 ring-offset-background" : "ring-2 ring-success/60 ring-offset-4 ring-offset-background"}`}>
+                <p className="text-xs font-medium text-foreground">{champion.name}</p>
+                <div className="flex flex-col items-start gap-1.5">
+                  {abilities.map((a, idx) => {
+                    const abStatus = state.batchAbilityStatus[idx];
+                    return (
+                      <div key={a.name} className="flex items-center gap-2">
+                        <AbilityIcon
+                          ability={a}
+                          size="sm"
+                          grayscale={false}
+                          rotation={false}
+                        />
+                        <span className="font-mono text-[10px] uppercase text-muted-foreground w-4 shrink-0">
+                          {a.slot}
+                        </span>
+                        <span className="text-[11px] font-medium text-foreground">
+                          {a.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => dispatch({ type: "NEXT_ROUND" })}
+                className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Next Round
+              </button>
+              <button
+                onClick={() => {
+                  dispatch({ type: "FINISH_SESSION" });
+                  router.push("/end");
+                }}
+                className="inline-flex items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <LogOut className="h-4 w-4 mr-1.5" />
+                End Session
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {state.message && (
         <div
@@ -343,7 +392,7 @@ function BatchModeContent() {
         </div>
       )}
 
-      {state.phase === "champion" && (
+      {!isResult && state.phase === "champion" && (
         <div className="w-full space-y-2">
           <label className="text-sm font-medium text-muted-foreground">
             Which champion?
@@ -374,7 +423,7 @@ function BatchModeContent() {
         </div>
       )}
 
-      {state.phase === "naming" && (
+      {!isResult && state.phase === "naming" && (
         <div className="w-full space-y-3">
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <span>Identify each ability</span>
@@ -384,10 +433,13 @@ function BatchModeContent() {
           </div>
           <div className="flex flex-col gap-2">
             {abilities.map((ability, idx) => {
-              const isSolved = state.batchAbilityStatus[idx] === "correct";
+              const status = state.batchAbilityStatus[idx];
+              const isCorrect = status === "correct";
+              const isSkipped = status === "skipped";
+              const isSolved = isCorrect || isSkipped;
               const isCurrent =
                 !isSolved &&
-                state.batchAbilityStatus.slice(0, idx).every((s) => s === "correct");
+                state.batchAbilityStatus.slice(0, idx).every((s) => s !== "pending");
 
               return (
                 <div
@@ -395,9 +447,11 @@ function BatchModeContent() {
                   className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
                     isCurrent
                       ? "border-primary bg-primary/5"
-                      : isSolved
+                      : isCorrect
                         ? "border-success/30 bg-success/5"
-                        : "border-border opacity-50"
+                        : isSkipped
+                          ? "border-destructive/30 bg-destructive/5"
+                          : "border-border opacity-40"
                   }`}
                 >
                   <AbilityIcon
@@ -409,11 +463,11 @@ function BatchModeContent() {
                   </span>
                   <div className="flex-1 min-w-0">
                     {isSolved ? (
-                      <div className="flex items-center gap-2 text-success font-medium truncate">
-                        <span>✓</span>
+                      <div className={`flex items-center gap-2 font-medium truncate ${isCorrect ? "text-success" : "text-destructive"}`}>
+                        <span>{isCorrect ? "✓" : "✗"}</span>
                         <span>{ability.name}</span>
                       </div>
-                    ) : (
+                    ) : isCurrent ? (
                       <AnswerCombobox
                         key={`batch-ability-${idx}-${state.batchAbilityKeys[idx] || 0}`}
                         id={`batch-ability-${idx}`}
@@ -427,8 +481,21 @@ function BatchModeContent() {
                         }}
                         placeholder="Name this ability..."
                       />
+                    ) : (
+                      <div className="text-sm text-muted-foreground/50 italic">—</div>
                     )}
                   </div>
+                  {isCurrent && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => dispatch({ type: "SKIP_BATCH_ABILITY" })}
+                      className="shrink-0 gap-1.5"
+                    >
+                      <SkipForward className="h-4 w-4" />
+                      Skip
+                    </Button>
+                  )}
                 </div>
               );
             })}
@@ -436,67 +503,17 @@ function BatchModeContent() {
         </div>
       )}
 
-      {state.phase === "result" && (
-        <ResultView
-          championCorrect={!!state.lastChampionCorrect}
-          abilityCorrect={true}
-          championName={champion.name}
-          onNext={() => dispatch({ type: "NEXT_ROUND" })}
-          onEnd={() => {
+      {!isResult && (
+        <button
+          onClick={() => {
             dispatch({ type: "FINISH_SESSION" });
             router.push("/end");
           }}
-        />
-      )}
-    </div>
-  );
-}
-
-function ResultView({
-  championCorrect,
-  abilityCorrect,
-  championName,
-  abilityName,
-  onNext,
-  onEnd,
-}: {
-  championCorrect: boolean;
-  abilityCorrect?: boolean;
-  championName: string;
-  abilityName?: string;
-  onNext: () => void;
-  onEnd: () => void;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-4 w-full">
-      <div className={`text-2xl font-bold ${championCorrect ? "text-success" : "text-destructive"}`}>
-        {championCorrect ? "Correct!" : "Incorrect"}
-      </div>
-      <div className="text-center">
-        <p className={championCorrect ? "text-success" : "text-destructive"}>
-          {championCorrect ? "✓" : "✗"} {championName}
-        </p>
-        {abilityName && (
-          <p className={abilityCorrect ? "text-success" : "text-destructive"}>
-            {abilityCorrect ? "✓" : "✗"} {abilityName}
-          </p>
-        )}
-      </div>
-      <div className="flex gap-3">
-        <button
-          onClick={onNext}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors mt-auto"
         >
-          Next Round
-        </button>
-        <button
-          onClick={onEnd}
-          className="inline-flex items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-        >
-          <LogOut className="h-4 w-4 mr-1.5" />
           End Session
         </button>
-      </div>
+      )}
     </div>
   );
 }
